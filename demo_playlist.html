@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+
+	<title>Video.js | HTML5 Video Player</title>
+
+	<link href="https://vjs.zencdn.net/4.11/video-js.css" rel="stylesheet">
+	<script src="https://vjs.zencdn.net/4.11/video.js"></script>
+
+	<script src="https://rawgit.com/tetzank/videojs-playLists/sourcetype/lib/videojs-playlists.js"></script>
+	<script src="https://rawgit.com/tetzank/videojs-shortcuts/master/videojs-shortcuts.js"></script>
+</head>
+<body>
+
+<p>Choose mp4 files:</p>
+<input type="file" id="files" name="files[]" accept="video/mp4" multiple="multiple" />
+<hr/>
+
+
+<video id="example_video_1" class="video-js vjs-default-skin vjs-big-play-centered" controls="controls" preload="auto" width="640" height="480">
+	<p class="vjs-no-js">To view this video please enable JavaScript, and consider upgrading to a web browser that <a href="http://videojs.com/html5-video-support/" target="_blank">supports HTML5 video</a></p>
+</video>
+
+<div class="playlist">
+	<ul id="playlist">
+	</ul>
+</div>
+
+<br style="clear:both;"/>
+
+<img id="snapshot" src="" />
+
+<script>
+	var player = videojs('example_video_1');
+	player.shortcuts();
+
+	var ul = document.getElementById('playlist');
+	function updateActive(){
+		var index = player.getVideoIndex();
+		var active = ul.querySelector('li.active');
+		if(active){
+			active.classList.remove('active');
+		}
+		ul.querySelector('li[data-index="'+index+'"]').classList.add('active');
+	}
+	player.on('next', updateActive);
+	player.on('prev', updateActive);
+
+	document.getElementById('files').addEventListener('change', function(event){
+		var list = [];
+		var li = '';
+		var len = player.pl? player.pl.videos.length: 0; //FIXME: player.pl is not part of the public API
+		for(var i=0; i<event.target.files.length; ++i){
+			var file = event.target.files[i];
+			list.push({ src: { src: URL.createObjectURL(file), type: 'video/mp4' }, poster: '', title: file.name });
+			li += '<li data-index="'+ (len + i) +'">'+ file.name +'</li>';
+		}
+		if(len > 0){
+			player.addVideos(list);
+		}else{
+			player.playList(list);
+		}
+		document.getElementById('playlist').innerHTML += li;
+		
+		updateActive();
+	}, false);
+	document.getElementById('playlist').addEventListener('click', function(event){
+		var index = parseInt(event.target.getAttribute('data-index'), 10);
+		player.setVideoIndex(index);
+		updateActive();
+	}, false);
+</script>
+
+<style>
+	#example_video_1{
+		float: left;
+	}
+	div.playlist{
+		float: left;
+		margin-left: 60px;
+	}
+	#playlist .active{
+		font-weight: bold;
+	}
+	#playlist li:hover{
+		text-decoration: underline;
+	}
+
+	.osd{
+		opacity: 0;
+		font-size: 30px;
+		color: white;
+		text-shadow:
+			-1px -1px 0 #000,
+			 1px -1px 0 #000,
+			-1px  1px 0 #000,
+			 1px  1px 0 #000;  
+		position: absolute;
+		top: 5px;
+		left: 15px;
+	}
+	.fadeout{
+		opacity: 0;
+		animation: fadeout 2s linear;
+		-webkit-animation: fadeout 2s linear;
+	}
+	@keyframes fadeout{
+		  0% { opacity: 1; }
+		 75% { opacity: 1; }
+		100% { opacity: 0; }
+	}
+	@-webkit-keyframes fadeout{
+		  0% { opacity: 1; }
+		 75% { opacity: 1; }
+		100% { opacity: 0; }
+	}
+</style>
+
+
+</body>
+</html>
