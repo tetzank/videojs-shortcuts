@@ -73,6 +73,22 @@
 </script>
 
 <style>
+	/* customize skin: move control bar below video and make it always visible, but go back to normal in fullscreen mode */
+	.vjs-default-skin.vjs-has-started.vjs-user-inactive.vjs-playing .vjs-control-bar {
+		opacity: 1;
+		visibility: visible;
+	}
+	.vjs-default-skin .vjs-control-bar{
+		bottom: -30px;
+	}
+	.vjs-default-skin.vjs-has-started.vjs-user-inactive.vjs-playing.vjs-fullscreen .vjs-control-bar {
+		opacity: 0;
+		visibility: hidden;
+	}
+	.vjs-default-skin.vjs-fullscreen .vjs-control-bar{
+		bottom: 0;
+	}
+
 	#example_video_1{
 		float: left;
 	}
