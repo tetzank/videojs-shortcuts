@@ -64,6 +64,12 @@ function shortcuts(options) {
 	function seek(delta){
 		this.currentTime(Math.min(Math.max(this.currentTime() + delta, 0), this.duration()));
 	}
+	function pauseSeek(delta){
+		if(!this.paused()){
+			this.pause();
+		}
+		seek.call(this, delta);
+	}
 	function adjustVolume(delta){
 		this.volume(this.volume() + delta);
 	}
@@ -129,10 +135,10 @@ function shortcuts(options) {
 		"Down":			{ action: seek, param:   -60 },
 		"PageUp":		{ action: seek, param:   600, desc: "Seek 10 minutes forward" },
 		"PageDown":		{ action: seek, param:  -600, desc: "Seek 10 minutes backward" },
-		".":			{ action: seek, param: -1/30, desc: "Seek one frame forward" }, //assumes 30 fps //TODO: pause
-		"U+00BE":		{ action: seek, param: -1/30 },
-		",":			{ action: seek, param:  1/30, desc: "Seek one frame backward" },
-		"U+00BC":		{ action: seek, param:  1/30 },
+		".":			{ action: pauseSeek, param:  1/30, desc: "Seek one frame forward" }, //assumes 30 fps
+		"U+00BE":		{ action: pauseSeek, param:  1/30 },
+		",":			{ action: pauseSeek, param: -1/30, desc: "Seek one frame backward" },
+		"U+00BC":		{ action: pauseSeek, param: -1/30 },
 
 		" ":			{ action: togglePause, desc: "Pause/unpause" },
 		"U+0020":		{ action: togglePause },
