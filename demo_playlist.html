@@ -27,10 +27,6 @@
 	</ul>
 </div>
 
-<br style="clear:both;"/>
-
-<img id="snapshot" src="" />
-
 <script>
 	var player = videojs('example_video_1');
 	player.shortcuts();
@@ -104,6 +100,32 @@
 	}
 	#playlist li:hover{
 		text-decoration: underline;
+		cursor: pointer;
+	}
+
+	.vjs-snapshot{
+		position: relative;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+	}
+	.vjs-snapshot *{ /* center horizontally and vertically */
+		position: absolute;
+		margin: 0;
+		top: 50%;
+		left: 50%;
+		margin-right: -50%;
+		transform: translate(-50%, -50%)
+	}
+	.vjs-snapshot span{
+		font-size: 30px;
+		color: white;
+		text-shadow:
+			-1px -1px 0 #000,
+			 1px -1px 0 #000,
+			-1px  1px 0 #000,
+			 1px  1px 0 #000;
 	}
 
 	.osd{

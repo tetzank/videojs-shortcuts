@@ -100,20 +100,38 @@ function shortcuts(options) {
 	}
 
 	function screenshot(){
-		var video = this.el().querySelector('video');
+		var el = this.el();
+		var video = el.querySelector('video');
 		if(video){
-			// take snapshot and display in img below
+			// take snapshot and display in img
 			var canvas = document.createElement('canvas');
 			var ctx = canvas.getContext('2d'); //FIXME: firefox has problems
-			var img = document.getElementById('snapshot'); //FIXME: generate it floating and delete it after close
-			canvas.width = /*this.width();*/video.videoWidth;
-			canvas.height = /*this.height();*/video.videoHeight;
+			var img = document.createElement('img');
+
+			var rect = video.getBoundingClientRect(); // use bounding rect instead of player.width/height because of fullscreen
+			img.style.maxWidth  = rect.width  +"px";
+			img.style.maxHeight = rect.height +"px";
+
+			canvas.width  = video.videoWidth;
+			canvas.height = video.videoHeight;
 			ctx.drawImage(video, 0, 0);
 			img.src = canvas.toDataURL('image/png');
-			
+
+			img.addEventListener('click', function(event){ // delete it after click
+				el.removeChild(this.parentNode);
+				el.focus(); // set focus back to video
+			}, false);
+
+			var txt = document.createElement('span');
+			txt.innerHTML = "save image with rightclick, click it to close";
+			var container = document.createElement('div');
+			container.className = "vjs-snapshot";
+			container.appendChild(img);
+			container.appendChild(txt);
+			el.appendChild(container);
+
 			this.pause();
-			this.el().blur(); // loose keyboard focus on video
-			img.scrollIntoView();
+			el.blur(); // loose keyboard focus on video
 		}
 	}
 
