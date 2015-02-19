@@ -136,48 +136,74 @@ function shortcuts(options) {
 	}
 
 	function showHelp(){
-		console.log("HELP!!!");//TODO
-		//TODO: show list of shortcuts with description
+		// show list of shortcuts with description
+		if(!this.helpscreen){
+			var help_str = "";
+			for(var key in opts){
+				var o = opts[key];
+				if(o.desc){
+					if(o.complement){
+						help_str += "<tr><td>"+key+" and "+o.complement+"</td><td>"+o.desc+"</td></tr>";
+					}else{
+						help_str += "<tr><td>"+key+"</td><td>"+o.desc+"</td></tr>";
+					}
+				}
+			}
+			this.helpscreen = document.createElement('div');
+			this.helpscreen.className = "vjs-helpscreen vjs-snapshot";
+			this.helpscreen.style.display = "none";
+			var box = document.createElement('div');
+			var tbl = document.createElement('table');
+			tbl.innerHTML = help_str;
+			box.appendChild(tbl);
+			this.helpscreen.appendChild(box);
+			this.el().appendChild(this.helpscreen);
+		}
+		if(this.helpscreen.style.display == "none"){
+			this.helpscreen.style.display = "block";
+		}else{
+			this.helpscreen.style.display = "none";
+		}
 	}
 
 	//TODO: make it customizable with plugin options
 	//TODO: when chromium supports key properly -> refactor by inlining some functions
 	var opts = {
-		"ArrowLeft": 	{ action: seek, param:   -10, desc: "Seek 10 seconds backward" },
-		"Left": 		{ action: seek, param:   -10 },
-		"ArrowRight":	{ action: seek, param:    10, desc: "Seek 10 seconds forward" },
-		"Right":		{ action: seek, param:    10 },
-		"ArrowUp":		{ action: seek, param:    60, desc: "Seek 1 minute forward" },
-		"Up":			{ action: seek, param:    60 },
-		"ArrowDown":	{ action: seek, param:   -60, desc: "Seek 1 minute backward" },
-		"Down":			{ action: seek, param:   -60 },
-		"PageUp":		{ action: seek, param:   600, desc: "Seek 10 minutes forward" },
-		"PageDown":		{ action: seek, param:  -600, desc: "Seek 10 minutes backward" },
-		".":			{ action: pauseSeek, param:  1/30, desc: "Seek one frame forward" }, //assumes 30 fps
+		"ArrowLeft": 	{ action: seek, param:  -10, desc: "Seek 10 seconds backward/forward", complement: "ArrowRight" },
+		"Left": 		{ action: seek, param:  -10 },
+		"ArrowRight":	{ action: seek, param:   10 },
+		"Right":		{ action: seek, param:   10 },
+		"ArrowUp":		{ action: seek, param:   60, desc: "Seek 1 minute forward/backward", complement: "ArrowDown" },
+		"Up":			{ action: seek, param:   60 },
+		"ArrowDown":	{ action: seek, param:  -60 },
+		"Down":			{ action: seek, param:  -60 },
+		"PageUp":		{ action: seek, param:  600, desc: "Seek 10 minutes forward/backward", complement: "PageDown" },
+		"PageDown":		{ action: seek, param: -600 },
+		".":			{ action: pauseSeek, param:  1/30, desc: "Seek one frame forward/backward", complement: "," }, //assumes 30 fps
 		"U+00BE":		{ action: pauseSeek, param:  1/30 },
-		",":			{ action: pauseSeek, param: -1/30, desc: "Seek one frame backward" },
+		",":			{ action: pauseSeek, param: -1/30 },
 		"U+00BC":		{ action: pauseSeek, param: -1/30 },
 
-		" ":			{ action: togglePause, desc: "Pause/unpause" },
+		" ":			{ action: togglePause },
 		"U+0020":		{ action: togglePause },
-		"p":			{ action: togglePause},
+		"p":			{ action: togglePause, desc: "Pause/unpause" },
 		"U+0050":		{ action: togglePause},
 		"m":			{ action: toggleMute, desc: "Toggle mute" },
 		"U+004D":		{ action: toggleMute },
 		"f":			{ action: toggleFullscreen, desc: "Toggle fullscreen" },
 		"U+0046":		{ action: toggleFullscreen },
 
-		"0":			{ action: adjustVolume, param:  0.1, desc: "Increase volume" },
+		"0":			{ action: adjustVolume, param:  0.1, desc: "Increase/decrease volume", complement: "9" },
 		"U+0030":		{ action: adjustVolume, param:  0.1 },
-		"9":			{ action: adjustVolume, param: -0.1, desc: "Decrease volume" },
+		"9":			{ action: adjustVolume, param: -0.1 },
 		"U+0039":		{ action: adjustVolume, param: -0.1 },
-		"1":			{ action: adjustContrast, param: -0.1, desc: "Decrease contrast" },
+		"1":			{ action: adjustContrast, param: -0.1 },
 		"U+0031":		{ action: adjustContrast, param: -0.1 },
-		"2":			{ action: adjustContrast, param:  0.1, desc: "Increase contrast" },
+		"2":			{ action: adjustContrast, param:  0.1, desc: "Increase/decrease contrast", complement: "1" },
 		"U+0032":		{ action: adjustContrast, param:  0.1 },
-		"3":			{ action: adjustBrightness, param: -0.1, desc: "Decrease brightness" },
+		"3":			{ action: adjustBrightness, param: -0.1 },
 		"U+0033":		{ action: adjustBrightness, param: -0.1 },
-		"4":			{ action: adjustBrightness, param:  0.1, desc: "Increase brightness" },
+		"4":			{ action: adjustBrightness, param:  0.1, desc: "Increase/decrease brightness", complement: "3" },
 		"U+0034":		{ action: adjustBrightness, param:  0.1 },
 		"r":			{ action: resetFilters },
 		"U+0052":		{ action: resetFilters },
@@ -186,7 +212,7 @@ function shortcuts(options) {
 		"q":			{ action: adjustSpeed, param: 1/1.1 },
 		"U+0051":		{ action: adjustSpeed, param: 1/1.1 },
 		"]":			{ action: adjustSpeed, param:   1.1 },
-		"w":			{ action: adjustSpeed, param:   1.1 },
+		"w":			{ action: adjustSpeed, param:   1.1, desc: "Increase/decrease speed", complement: "q" },
 		"U+0057":		{ action: adjustSpeed, param:   1.1 },
 		"{":			{ action: adjustSpeed, param: 1/2 },
 		"}":			{ action: adjustSpeed, param:   2 },
@@ -197,16 +223,15 @@ function shortcuts(options) {
 		"U+0053":		{ action: screenshot },
 
 		">":			{ action: this.next }, // no modifiers, so not accessible in chromium
-		"n":			{ action: this.next },
+		"n":			{ action: this.next, desc: "Move to next/previous playlist item", complement: "b" },
 		"U+004E":		{ action: this.next },
-		"<": 			{ action: this.prev, desc: "Move to previous playlist item" },
+		"<": 			{ action: this.prev },
 		"U+00DC": 		{ action: this.prev },
 		"b":			{ action: this.prev },
 		"U+0042":		{ action: this.prev },
 
-// 		"U+00DC": 		{ action: say, param: "chromium >", mod: "Shift" }, //FIXME: key is the same, not possible as dict key
-
-		"h": 			{ action: showHelp }
+		"h": 			{ action: showHelp, desc: "Show/hide this help screen" },
+		"U+0048":		{ action: showHelp }
 	};
 
 	this.on('keydown', function(event){
