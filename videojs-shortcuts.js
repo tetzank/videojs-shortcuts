@@ -73,13 +73,16 @@ function shortcuts(options) {
 	function adjustVolume(delta){
 		this.volume(this.volume() + delta);
 	}
+	// FIXME: flash can't change playbackRate
+	// this.player().tech && this.player().tech['featuresPlaybackRate'] used by playbackRate menu button
+	// doesn't work, we don't have access to tech, maybe minified
 	function adjustSpeed(factor){
-		this.playbackRate(this.playbackRate() * factor);
-		this.osd("Speed: "+ Math.round(this.playbackRate() * 100)/100);
+		this.playbackRate(Math.round(this.playbackRate()*factor * 100)/100);
+		this.osd("Speed: "+ this.playbackRate());
 	}
 	function resetSpeed(){
 		this.playbackRate(1);
-		this.osd("Speed: "+ Math.round(this.playbackRate() * 100)/100);
+		this.osd("Speed: 1");
 	}
 	function togglePause(){
 		if(this.paused()){
@@ -99,6 +102,9 @@ function shortcuts(options) {
 		}
 	}
 
+	//FIXME: when helpscreen is shown and screenshot is taken
+	// -> screenshot is shown below as both use a relative div
+	// just use one div for centering stuff or ...
 	function screenshot(){
 		var el = this.el();
 		var video = el.querySelector('video');

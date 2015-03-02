@@ -28,7 +28,9 @@
 </div>
 
 <script>
-	var player = videojs('example_video_1');
+	var player = videojs('example_video_1', {
+		playbackRates: [0.5, 1, 1.5, 2]
+	});
 	player.shortcuts({
 		">":			{ action: player.next }, // no modifiers, so not accessible in chromium
 		"n":			{ action: player.next, desc: "Move to next/previous playlist item", complement: "b" },
