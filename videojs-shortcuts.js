@@ -166,7 +166,6 @@ function shortcuts(options) {
 		}
 	}
 
-	//TODO: make it customizable with plugin options
 	//TODO: when chromium supports key properly -> refactor by inlining some functions
 	var opts = {
 		"ArrowLeft": 	{ action: seek, param:  -10, desc: "Seek 10 seconds backward/forward", complement: "ArrowRight" },
@@ -222,17 +221,13 @@ function shortcuts(options) {
 		"s":			{ action: screenshot },
 		"U+0053":		{ action: screenshot },
 
-		">":			{ action: this.next }, // no modifiers, so not accessible in chromium
-		"n":			{ action: this.next, desc: "Move to next/previous playlist item", complement: "b" },
-		"U+004E":		{ action: this.next },
-		"<": 			{ action: this.prev },
-		"U+00DC": 		{ action: this.prev },
-		"b":			{ action: this.prev },
-		"U+0042":		{ action: this.prev },
-
 		"h": 			{ action: showHelp, desc: "Show/hide this help screen" },
 		"U+0048":		{ action: showHelp }
 	};
+	// override standard opts with user defined options
+	for(var attr in options){
+		opts[attr] = options[attr];
+	}
 
 	this.on('keydown', function(event){
 		var key = event.key || event.keyIdentifier; //fallback for chromium

@@ -29,7 +29,15 @@
 
 <script>
 	var player = videojs('example_video_1');
-	player.shortcuts();
+	player.shortcuts({
+		">":			{ action: player.next }, // no modifiers, so not accessible in chromium
+		"n":			{ action: player.next, desc: "Move to next/previous playlist item", complement: "b" },
+		"U+004E":		{ action: player.next },
+		"<": 			{ action: player.prev },
+		"U+00DC": 		{ action: player.prev },
+		"b":			{ action: player.prev },
+		"U+0042":		{ action: player.prev }
+	});
 
 	var ul = document.getElementById('playlist');
 	function updateActive(){
