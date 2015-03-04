@@ -103,40 +103,68 @@ function shortcuts(options) {
 		}
 	}
 
-	//FIXME: when helpscreen is shown and screenshot is taken
-	// -> screenshot is shown below as both use a relative div
-	// just use one div for centering stuff or ...
+	this.centering = document.createElement('div');
+	this.centering.className = "vjs-centering";
+	this.centering.style.display = "none";
+	this.centering.displays = {};
+	this.centering.currentDisplay = null;
+	this.centering.addDisplay = function(key, elements){
+		this.displays[key] = elements;
+		for(var i=0; i<elements.length; ++i){
+			elements[i].style.display = "none";
+			this.appendChild(elements[i]);
+		}
+	};
+	this.centering.toggle = function(key){
+		var ele;
+		if(this.currentDisplay && this.currentDisplay!=key){
+			ele = this.displays[this.currentDisplay];
+			for(var i=0; i<ele.length; ++i){
+				ele[i].style.display = "none";
+			}
+		}
+		ele = this.displays[key];
+		var d = (ele[0].style.display=="none")? "block": "none";
+		for(var i=0; i<ele.length; ++i){
+			ele[i].style.display = d;
+		}
+		this.style.display = d;
+		this.currentDisplay = (d=="block")? key: null;
+	};
+	this.el().appendChild(this.centering);
+
 	function screenshot(){
+		var center = this.centering;
 		var el = this.el();
 		var video = el.querySelector('video');
 		if(video){
+			if(!this.snapshot){
+				this.snapshot = document.createElement('img');
+
+				var rect = video.getBoundingClientRect(); // use bounding rect instead of player.width/height because of fullscreen
+				this.snapshot.style.maxWidth  = rect.width  +"px";
+				this.snapshot.style.maxHeight = rect.height +"px";
+
+				this.snapshot.addEventListener('click', function(event){
+					center.toggle('snapshot'); // hide it
+					el.focus(); // set focus back to video
+				}, false);
+
+				var txt = document.createElement('span');
+				txt.className = "vjs-outlined";
+				txt.innerHTML = "save image with rightclick, click it to close";
+				center.addDisplay('snapshot', [this.snapshot, txt]);
+			}
 			// take snapshot and display in img
 			var canvas = document.createElement('canvas');
 			var ctx = canvas.getContext('2d');
-			var img = document.createElement('img');
-
-			var rect = video.getBoundingClientRect(); // use bounding rect instead of player.width/height because of fullscreen
-			img.style.maxWidth  = rect.width  +"px";
-			img.style.maxHeight = rect.height +"px";
 
 			canvas.width  = video.videoWidth;
 			canvas.height = video.videoHeight;
 			ctx.drawImage(video, 0, 0);
-			img.src = canvas.toDataURL('image/png');
+			this.snapshot.src = canvas.toDataURL('image/png');
 
-			img.addEventListener('click', function(event){ // delete it after click
-				el.removeChild(this.parentNode);
-				el.focus(); // set focus back to video
-			}, false);
-
-			var txt = document.createElement('span');
-			txt.className = "vjs-outlined";
-			txt.innerHTML = "save image with rightclick, click it to close";
-			var container = document.createElement('div');
-			container.className = "vjs-snapshot";
-			container.appendChild(img);
-			container.appendChild(txt);
-			el.appendChild(container);
+			center.toggle('snapshot');
 
 			this.pause();
 			el.blur(); // loose keyboard focus on video
@@ -158,20 +186,13 @@ function shortcuts(options) {
 				}
 			}
 			this.helpscreen = document.createElement('div');
-			this.helpscreen.className = "vjs-helpscreen vjs-snapshot";
-			this.helpscreen.style.display = "none";
-			var box = document.createElement('div');
+			this.helpscreen.className = "vjs-helpscreen";
 			var tbl = document.createElement('table');
 			tbl.innerHTML = help_str;
-			box.appendChild(tbl);
-			this.helpscreen.appendChild(box);
-			this.el().appendChild(this.helpscreen);
+			this.helpscreen.appendChild(tbl);
+			this.centering.addDisplay('help', [this.helpscreen]);
 		}
-		if(this.helpscreen.style.display == "none"){
-			this.helpscreen.style.display = "block";
-		}else{
-			this.helpscreen.style.display = "none";
-		}
+		this.centering.toggle('help');
 	}
 
 	//TODO: when chromium supports key properly -> refactor by inlining some functions

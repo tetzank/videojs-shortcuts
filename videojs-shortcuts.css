@@ -1,11 +1,11 @@
-.vjs-snapshot{
+.vjs-centering{
 	position: relative;
 	top: 0;
 	left: 0;
 	width: 100%;
 	height: 100%;
 }
-.vjs-snapshot>*{ /* center horizontally and vertically */
+.vjs-centering>*{ /* center horizontally and vertically */
 	position: absolute;
 	margin: 0;
 	top: 50%;
@@ -24,8 +24,6 @@
 }
 .vjs-helpscreen{
 	font-size: 16px;
-}
-.vjs-helpscreen>div{
 	background-color: rgba(0,0,0,.7);
 }
 
