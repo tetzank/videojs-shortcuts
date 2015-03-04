@@ -36,7 +36,7 @@ function shortcuts(options) {
 
 	// osd overlay
 	this.osd_overlay = document.createElement('div');
-	this.osd_overlay.className = "osd";
+	this.osd_overlay.className = "vjs-osd vjs-outlined";
 	this.el().appendChild(this.osd_overlay);
 	this.osd = function(text){
 		//TODO
@@ -76,6 +76,7 @@ function shortcuts(options) {
 	// FIXME: flash can't change playbackRate
 	// this.player().tech && this.player().tech['featuresPlaybackRate'] used by playbackRate menu button
 	// doesn't work, we don't have access to tech, maybe minified
+	// does not work too: test this.techName !== "Html5"
 	function adjustSpeed(factor){
 		this.playbackRate(Math.round(this.playbackRate()*factor * 100)/100);
 		this.osd("Speed: "+ this.playbackRate());
@@ -111,7 +112,7 @@ function shortcuts(options) {
 		if(video){
 			// take snapshot and display in img
 			var canvas = document.createElement('canvas');
-			var ctx = canvas.getContext('2d'); //FIXME: firefox has problems
+			var ctx = canvas.getContext('2d');
 			var img = document.createElement('img');
 
 			var rect = video.getBoundingClientRect(); // use bounding rect instead of player.width/height because of fullscreen
@@ -129,6 +130,7 @@ function shortcuts(options) {
 			}, false);
 
 			var txt = document.createElement('span');
+			txt.className = "vjs-outlined";
 			txt.innerHTML = "save image with rightclick, click it to close";
 			var container = document.createElement('div');
 			container.className = "vjs-snapshot";
@@ -210,7 +212,7 @@ function shortcuts(options) {
 		"U+0033":		{ action: adjustBrightness, param: -0.1 },
 		"4":			{ action: adjustBrightness, param:  0.1, desc: "Increase/decrease brightness", complement: "3" },
 		"U+0034":		{ action: adjustBrightness, param:  0.1 },
-		"r":			{ action: resetFilters },
+		"r":			{ action: resetFilters, desc: "Reset all filters" },
 		"U+0052":		{ action: resetFilters },
 
 		"[":			{ action: adjustSpeed, param: 1/1.1 }, // multiplies by param
@@ -221,10 +223,10 @@ function shortcuts(options) {
 		"U+0057":		{ action: adjustSpeed, param:   1.1 },
 		"{":			{ action: adjustSpeed, param: 1/2 },
 		"}":			{ action: adjustSpeed, param:   2 },
-		"Backspace":	{ action: resetSpeed },
+		"Backspace":	{ action: resetSpeed, desc: "Reset Speed" },
 		"U+0008":		{ action: resetSpeed },
 
-		"s":			{ action: screenshot },
+		"s":			{ action: screenshot, desc: "Take snapshot" },
 		"U+0053":		{ action: screenshot },
 
 		"h": 			{ action: showHelp, desc: "Show/hide this help screen" },

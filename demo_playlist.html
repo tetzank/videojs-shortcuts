@@ -9,6 +9,7 @@
 	<script src="https://vjs.zencdn.net/4.11/video.js"></script>
 
 	<script src="https://rawgit.com/tetzank/videojs-playLists/sourcetype/lib/videojs-playlists.js"></script>
+	<link href="videojs-shortcuts.css" rel="stylesheet" type="text/css" />
 	<script src="videojs-shortcuts.js"></script>
 </head>
 <body>
@@ -111,66 +112,6 @@
 	#playlist li:hover{
 		text-decoration: underline;
 		cursor: pointer;
-	}
-
-	.vjs-snapshot{
-		position: relative;
-		top: 0;
-		left: 0;
-		width: 100%;
-		height: 100%;
-	}
-	.vjs-snapshot>*{ /* center horizontally and vertically */
-		position: absolute;
-		margin: 0;
-		top: 50%;
-		left: 50%;
-		margin-right: -50%;
-		transform: translate(-50%, -50%)
-	}
-	.vjs-snapshot span{
-		font-size: 30px;
-		color: white;
-		text-shadow:
-			-1px -1px 0 #000,
-			 1px -1px 0 #000,
-			-1px  1px 0 #000,
-			 1px  1px 0 #000;
-	}
-	.vjs-helpscreen{
-		font-size: 16px;
-	}
-	.vjs-helpscreen>div{
-		background-color: rgba(0,0,0,.7);
-	}
-
-	.osd{
-		opacity: 0;
-		font-size: 30px;
-		color: white;
-		text-shadow:
-			-1px -1px 0 #000,
-			 1px -1px 0 #000,
-			-1px  1px 0 #000,
-			 1px  1px 0 #000;  
-		position: absolute;
-		top: 5px;
-		left: 15px;
-	}
-	.fadeout{
-		opacity: 0;
-		animation: fadeout 2s linear;
-		-webkit-animation: fadeout 2s linear;
-	}
-	@keyframes fadeout{
-		  0% { opacity: 1; }
-		 75% { opacity: 1; }
-		100% { opacity: 0; }
-	}
-	@-webkit-keyframes fadeout{
-		  0% { opacity: 1; }
-		 75% { opacity: 1; }
-		100% { opacity: 0; }
 	}
 </style>
 
