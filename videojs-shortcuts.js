@@ -153,6 +153,9 @@ function shortcuts(options) {
 				this.snapshot.parent.id = "canvas_parent";
 				this.snapshot.container = document.createElement('div');
 				this.snapshot.container.id = "canvas_container";
+				this.snapshot.canvas_bg = document.createElement('canvas');
+				this.snapshot.container.appendChild(this.snapshot.canvas_bg);
+				this.snapshot.ctx_bg = this.snapshot.canvas_bg.getContext("2d");
 				this.snapshot.canvas = document.createElement('canvas');
 				this.snapshot.container.appendChild(this.snapshot.canvas);
 				this.snapshot.ctx = this.snapshot.canvas.getContext("2d");
@@ -168,6 +171,8 @@ function shortcuts(options) {
 				var rect = video.getBoundingClientRect(); // use bounding rect instead of player.width/height because of fullscreen
 				this.snapshot.canvas.style.maxWidth  = rect.width  +"px";
 				this.snapshot.canvas.style.maxHeight = rect.height +"px";
+				this.snapshot.canvas_bg.style.maxWidth  = rect.width  +"px";
+				this.snapshot.canvas_bg.style.maxHeight = rect.height +"px";
 				this.snapshot.parent.style.width = video.videoWidth +"px";
 				this.snapshot.parent.style.height = video.videoHeight  +"px";
 				this.snapshot.parent.style.maxWidth  = rect.width  +"px";
@@ -187,32 +192,37 @@ function shortcuts(options) {
 				snapshot.parent.appendChild(this.snapshot.container);
 				center.addDisplay('snapshot', [this.snapshot.parent]);
 
-				snapshot.cropbox.addEventListener('mousedown', function(e){
-					console.log('cropping');
+				function cropCanvas(canvas, context){
 					var newcanvas = document.createElement('canvas');
-					newcanvas.id = "canvas";
 					newcanvas.width = scale * snapshot.cropbox.offsetWidth;
 					newcanvas.height = scale * snapshot.cropbox.offsetHeight;
 					newcanvas.style.maxWidth  = rect.width  +"px";
 					newcanvas.style.maxHeight = rect.height +"px";
 
 					var ctx = newcanvas.getContext("2d");
-					ctx.drawImage(snapshot.canvas, scale*snapshot.cropbox.offsetLeft, scale*snapshot.cropbox.offsetTop,
+					ctx.drawImage(canvas, scale*snapshot.cropbox.offsetLeft, scale*snapshot.cropbox.offsetTop,
 									newcanvas.width, newcanvas.height, 0, 0, newcanvas.width, newcanvas.height);
 
-					snapshot.container.replaceChild(newcanvas, snapshot.canvas);
-					snapshot.canvas = newcanvas;
-					ctx.lineCap = snapshot.ctx.lineCap; // transfer context states
-					ctx.strokeStyle = snapshot.ctx.strokeStyle;
-					ctx.lineWidth = snapshot.ctx.lineWidth;
-					snapshot.ctx = ctx;
+					snapshot.container.replaceChild(newcanvas, canvas);
+// 					canvas = newcanvas;
+					ctx.lineCap = context.lineCap; // transfer context states
+					ctx.strokeStyle = context.strokeStyle;
+					ctx.lineWidth = context.lineWidth;
+// 					context = ctx;
+					// javascript has no pass-by-reference -> do stupid stuff
+					return [newcanvas, ctx];
+				}
+				snapshot.cropbox.addEventListener('mousedown', function(e){
+					var r = cropCanvas(snapshot.canvas_bg, snapshot.ctx_bg);
+					snapshot.canvas_bg = r[0]; snapshot.ctx_bg = r[1];
+					r = cropCanvas(snapshot.canvas, snapshot.ctx);
+					snapshot.canvas = r[0]; snapshot.ctx = r[1];
 					updateScale(video);
 
 					snapshot.cropbox.style.display = "none";
 					e.stopPropagation(); //otherwise canvas below gets mousedown
 				}, false);
 
-				
 				var paint = false;
 				snapshot.container.addEventListener('mousedown', function(e){
 					paint = true;
@@ -245,6 +255,10 @@ function shortcuts(options) {
 							snapshot.cropbox.style.border = "1px dashed "+ color.value;
 							snapshot.cropbox.style.color = color.value;
 							break;
+						case "eraser":
+							var s = size.value;
+							snapshot.ctx.clearRect(scale*x - s/2, scale*y - s/2, s, s);
+							break;
 					}
 			// 		e.preventDefault();
 				}, false);
@@ -272,6 +286,10 @@ function shortcuts(options) {
 								snapshot.cropbox.style.width = (x - snapshot.cropbox.offsetLeft) +"px"; // resize
 								snapshot.cropbox.style.height = (y - snapshot.cropbox.offsetTop) +"px";
 								break;
+							case "eraser":
+								var s = size.value;
+								snapshot.ctx.clearRect(scale*x - s/2, scale*y - s/2, s, s);
+								break;
 						}
 						e.preventDefault();
 					}
@@ -292,11 +310,20 @@ function shortcuts(options) {
 				snapshot.container.addEventListener('mouseup', finish, false);
 				snapshot.container.addEventListener('mouseleave', finish, false);
 
+				function combineDrawing(encoding){
+					var canvas_tmp = document.createElement('canvas');
+					canvas_tmp.width = snapshot.canvas.width;
+					canvas_tmp.height = snapshot.canvas.height;
+					var ctx_tmp = canvas_tmp.getContext("2d");
+					ctx_tmp.drawImage(snapshot.canvas_bg, 0, 0);
+					ctx_tmp.drawImage(snapshot.canvas, 0, 0);
+					window.open(canvas_tmp.toDataURL(encoding));
+				}
 				dljpeg.addEventListener('click', function(){
-					window.open(snapshot.canvas.toDataURL("image/jpeg"));
+					combineDrawing("image/jpeg");
 				}, false);
 				dlpng.addEventListener('click', function(){
-					window.open(snapshot.canvas.toDataURL("image/png"));
+					combineDrawing("image/png");
 				}, false);
 			}
 
@@ -304,9 +331,12 @@ function shortcuts(options) {
 			this.snapshot.canvas.height = video.videoHeight;
 			this.snapshot.ctx.strokeStyle = color.value;
 			this.snapshot.ctx.lineWidth = size.value / 2;
+			this.snapshot.ctx.lineCap = "round";
 			updateScale(video);
 
-			this.snapshot.ctx.drawImage(video, 0, 0);
+			this.snapshot.canvas_bg.width = video.videoWidth;
+			this.snapshot.canvas_bg.height = video.videoHeight;
+			this.snapshot.ctx_bg.drawImage(video, 0, 0);
 
 			center.toggle('snapshot');
 			paintcontrols.style.visibility = "visible";
