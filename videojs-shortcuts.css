@@ -52,3 +52,31 @@
 	 75% { opacity: 1; }
 	100% { opacity: 0; }
 }
+
+#canvas_parent{
+	background-color: white;
+}
+#canvas_container{
+	position: relative;
+	cursor: crosshair;
+}
+#canvas_container canvas/*.vjs-centering>canvas*/{
+	position: absolute;
+	cursor: crosshair;
+}
+#canvas_container div/*.vjs-centering>canvas+canvas+div*/{
+	justify-content: center; /* align horizontal */
+	align-items: center; /* align vertical */
+
+	border: 1px dashed black; /* FIXME: not the best color probably */
+	position: absolute;
+	left: 0px;
+	top: 0px;
+	font-weight: bold;
+	text-shadow:
+		-1px -1px 0 #000,
+		 1px -1px 0 #000,
+		-1px  1px 0 #000,
+		 1px  1px 0 #000;
+	cursor: pointer;
+}

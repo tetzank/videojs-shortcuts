@@ -1,6 +1,6 @@
 
 function shortcuts(options) {
-	"use strict";
+// 	"use strict";
 
 	// Set default player tabindex to handle keydown events
 	if (!this.el().hasAttribute('tabIndex')) {
@@ -133,38 +133,183 @@ function shortcuts(options) {
 	};
 	this.el().appendChild(this.centering);
 
+	var scale;
+	function updateScale(video){
+		var rect = video.getBoundingClientRect();
+		var scalew = player.snapshot.canvas.width / rect.width;
+		var scaleh = player.snapshot.canvas.height / rect.height;
+		scale = Math.max(Math.max(scalew, scaleh), 1);
+		var scale_txt = document.getElementById('scale');
+		scale_txt.innerHTML = Math.round(1/scale*100)/100;
+	}
 	function screenshot(){
 		var center = this.centering;
 		var el = this.el();
 		var video = el.querySelector('video');
 		if(video){
 			if(!this.snapshot){
-				this.snapshot = document.createElement('img');
+				this.snapshot = {};
+				this.snapshot.parent = document.createElement('div');
+				this.snapshot.parent.id = "canvas_parent";
+				this.snapshot.container = document.createElement('div');
+				this.snapshot.container.id = "canvas_container";
+				this.snapshot.canvas = document.createElement('canvas');
+				this.snapshot.container.appendChild(this.snapshot.canvas);
+				this.snapshot.ctx = this.snapshot.canvas.getContext("2d");
+				this.snapshot.canvas_rect = document.createElement('canvas');
+				this.snapshot.canvas_rect.style.display = "none";
+				this.snapshot.container.appendChild(this.snapshot.canvas_rect);
+				this.snapshot.ctx_rect = this.snapshot.canvas_rect.getContext("2d");
+				this.snapshot.cropbox = document.createElement('div');
+				this.snapshot.cropbox.innerHTML = "crop";
+				this.snapshot.cropbox.style.display = "none";
+				this.snapshot.container.appendChild(this.snapshot.cropbox);
 
 				var rect = video.getBoundingClientRect(); // use bounding rect instead of player.width/height because of fullscreen
-				this.snapshot.style.maxWidth  = rect.width  +"px";
-				this.snapshot.style.maxHeight = rect.height +"px";
-
-				this.snapshot.addEventListener('click', function(event){
-					center.toggle('snapshot'); // hide it
-					el.focus(); // set focus back to video
+				this.snapshot.canvas.style.maxWidth  = rect.width  +"px";
+				this.snapshot.canvas.style.maxHeight = rect.height +"px";
+				this.snapshot.parent.style.width = video.videoWidth +"px";
+				this.snapshot.parent.style.height = video.videoHeight  +"px";
+				this.snapshot.parent.style.maxWidth  = rect.width  +"px";
+				this.snapshot.parent.style.maxHeight = rect.height +"px";
+				
+				var snapshot = this.snapshot;
+				color.addEventListener('change', function(e){
+					snapshot.ctx.strokeStyle = color.value;
+				}, false);
+				size.addEventListener('change', function(e){
+					snapshot.ctx.lineWidth = size.value / 2;
+				}, false);
+				tool.addEventListener('change', function(){
+					snapshot.cropbox.style.display = "none";
 				}, false);
 
-				var txt = document.createElement('span');
-				txt.className = "vjs-outlined";
-				txt.innerHTML = "save image with rightclick, click it to close";
-				center.addDisplay('snapshot', [this.snapshot, txt]);
-			}
-			// take snapshot and display in img
-			var canvas = document.createElement('canvas');
-			var ctx = canvas.getContext('2d');
+				snapshot.parent.appendChild(this.snapshot.container);
+				center.addDisplay('snapshot', [this.snapshot.parent]);
 
-			canvas.width  = video.videoWidth;
-			canvas.height = video.videoHeight;
-			ctx.drawImage(video, 0, 0);
-			this.snapshot.src = canvas.toDataURL('image/png');
+				snapshot.cropbox.addEventListener('mousedown', function(e){
+					console.log('cropping');
+					var newcanvas = document.createElement('canvas');
+					newcanvas.id = "canvas";
+					newcanvas.width = scale * snapshot.cropbox.offsetWidth;
+					newcanvas.height = scale * snapshot.cropbox.offsetHeight;
+					newcanvas.style.maxWidth  = rect.width  +"px";
+					newcanvas.style.maxHeight = rect.height +"px";
+
+					var ctx = newcanvas.getContext("2d");
+					ctx.drawImage(snapshot.canvas, scale*snapshot.cropbox.offsetLeft, scale*snapshot.cropbox.offsetTop,
+									newcanvas.width, newcanvas.height, 0, 0, newcanvas.width, newcanvas.height);
+
+					snapshot.container.replaceChild(newcanvas, snapshot.canvas);
+					snapshot.canvas = newcanvas;
+					ctx.lineCap = snapshot.ctx.lineCap; // transfer context states
+					ctx.strokeStyle = snapshot.ctx.strokeStyle;
+					ctx.lineWidth = snapshot.ctx.lineWidth;
+					snapshot.ctx = ctx;
+					updateScale(video);
+
+					snapshot.cropbox.style.display = "none";
+					e.stopPropagation(); //otherwise canvas below gets mousedown
+				}, false);
+
+				
+				var paint = false;
+				snapshot.container.addEventListener('mousedown', function(e){
+					paint = true;
+					var pos = snapshot.container.getBoundingClientRect();
+					var x = e.clientX - pos.left;
+					var y = e.clientY - pos.top;
+					switch(tool.value){
+						case "brush":
+							x *= scale; y *= scale;
+							snapshot.ctx.beginPath();
+							snapshot.ctx.moveTo(x-1, y);
+							snapshot.ctx.lineTo(x, y);
+							snapshot.ctx.stroke();
+							break;
+						case "rectangle":
+							// rectangle is scaled when blitting, not when dragging
+							snapshot.canvas_rect.width = 0;
+							snapshot.canvas_rect.height = 0;
+							snapshot.canvas_rect.style.display = "block";
+							snapshot.canvas_rect.style.left = x + "px";
+							snapshot.canvas_rect.style.top = y + "px";
+							break;
+						case "crop":
+							snapshot.cropbox.style.width = 0;
+							snapshot.cropbox.style.height = 0;
+							snapshot.cropbox.style.display = "flex";
+							snapshot.cropbox.style.left = x + "px";
+							snapshot.cropbox.style.top = y + "px";
+
+							snapshot.cropbox.style.border = "1px dashed "+ color.value;
+							snapshot.cropbox.style.color = color.value;
+							break;
+					}
+			// 		e.preventDefault();
+				}, false);
+
+				snapshot.container.addEventListener('mousemove', function(e){
+					if(paint){
+						var pos = snapshot.container.getBoundingClientRect();
+						var x = e.clientX - pos.left;
+						var y = e.clientY - pos.top;
+						switch(tool.value){
+							case "brush":
+								snapshot.ctx.lineTo(scale * x, scale * y);
+								snapshot.ctx.stroke();
+								break;
+							case "rectangle":
+								snapshot.ctx_rect.clearRect(0, 0, snapshot.ctx_rect.canvas.width, snapshot.ctx_rect.canvas.height);
+								// this way it's only possible to drag to the right and down, mousedown sets top left
+								snapshot.canvas_rect.width = x - snapshot.canvas_rect.offsetLeft; // resize canvas
+								snapshot.canvas_rect.height = y - snapshot.canvas_rect.offsetTop;
+								snapshot.ctx_rect.strokeStyle = color.value; //looks like its reset when resizing canvas
+								snapshot.ctx_rect.lineWidth = size.value / scale; // scale lineWidth
+								snapshot.ctx_rect.strokeRect(0, 0, snapshot.ctx_rect.canvas.width, snapshot.ctx_rect.canvas.height);
+								break;
+							case "crop":
+								snapshot.cropbox.style.width = (x - snapshot.cropbox.offsetLeft) +"px"; // resize
+								snapshot.cropbox.style.height = (y - snapshot.cropbox.offsetTop) +"px";
+								break;
+						}
+						e.preventDefault();
+					}
+				}, false);
+
+				function finish(){
+					if(paint){
+						paint = false;
+						if(tool.value == "rectangle"){
+							//blit snapshot.canvas_rect on canvas, scaled
+							snapshot.ctx.drawImage(snapshot.canvas_rect,
+									scale*snapshot.canvas_rect.offsetLeft, scale*snapshot.canvas_rect.offsetTop,
+									scale*snapshot.ctx_rect.canvas.width, scale*snapshot.ctx_rect.canvas.height);
+							snapshot.canvas_rect.style.display = "none";
+						}
+					}
+				}
+				snapshot.container.addEventListener('mouseup', finish, false);
+				snapshot.container.addEventListener('mouseleave', finish, false);
+
+				dljpeg.addEventListener('click', function(){
+					window.open(snapshot.canvas.toDataURL("image/jpeg"));
+				}, false);
+				dlpng.addEventListener('click', function(){
+					window.open(snapshot.canvas.toDataURL("image/png"));
+				}, false);
+			}
+
+			this.snapshot.canvas.width = video.videoWidth;
+			this.snapshot.canvas.height = video.videoHeight;
+			this.snapshot.ctx.strokeStyle = color.value;
+			this.snapshot.ctx.lineWidth = size.value / 2;
+			updateScale(video);
+
+			this.snapshot.ctx.drawImage(video, 0, 0);
 
 			center.toggle('snapshot');
+			paintcontrols.style.visibility = "visible";
 
 			this.pause();
 			el.blur(); // loose keyboard focus on video
