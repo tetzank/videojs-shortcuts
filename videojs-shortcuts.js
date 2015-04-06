@@ -39,26 +39,19 @@ function shortcuts(options) {
 	this.osd_overlay.className = "vjs-osd vjs-outlined";
 	this.el().appendChild(this.osd_overlay);
 	this.osd = function(text){
-		//TODO
-// 		var elm = this.osd_overlay;
-// 		var newone = elm.cloneNode(true);
-// 		newone.innerHTML = text;
-// 		elm.parentNode.replaceChild(newone, elm);
-// 		this.osd_overlay = elm;
-	
 		this.osd_overlay.innerHTML = text;
 		// in case animation is running -> restart
 		this.osd_overlay.classList.remove("fadeout");
 		//triggering reflow -> recognizes classList change
-		this.osd_overlay.offsetWidth = this.osd_overlay.offsetWidth; //FIXME: doesn't work in firefox
+		this.osd_overlay.offsetWidth = this.osd_overlay.offsetWidth;
 		// start animation
 		this.osd_overlay.classList.add("fadeout");
 		// remove class on end of animation
-// 		var removefn = function(event){
-// 			ani.classList.remove("fadeout");
-// 		};
-// 		ani.addEventListener('animationend', removefn, false);
-// 		ani.addEventListener('webkitAnimationEnd', removefn, false);
+		var removefn = function(event){
+			this.classList.remove("fadeout");
+		};
+		this.osd_overlay.addEventListener('animationend', removefn, false);
+		this.osd_overlay.addEventListener('webkitAnimationEnd', removefn, false);
 	};
 
 	function seek(delta){
@@ -134,7 +127,7 @@ function shortcuts(options) {
 	this.el().appendChild(this.centering);
 
 	var scale;
-	function updateScale(video){
+	function updateScale(video){ //FIXME: move inside screenshot() because it's only used there
 		var rect = video.getBoundingClientRect();
 		var scalew = player.snapshot.canvas.width / rect.width;
 		var scaleh = player.snapshot.canvas.height / rect.height;
@@ -142,6 +135,9 @@ function shortcuts(options) {
 		var scale_txt = document.getElementById('scale');
 		scale_txt.innerHTML = Math.round(1/scale*100)/100;
 	}
+	//TODO:
+	// - controls inside player on new controlbar (with new exit button) hiding normal player controls
+	// - small icons instead of select box for tools
 	function screenshot(){
 		var center = this.centering;
 		var el = this.el();
@@ -167,6 +163,9 @@ function shortcuts(options) {
 				this.snapshot.cropbox.innerHTML = "crop";
 				this.snapshot.cropbox.style.display = "none";
 				this.snapshot.container.appendChild(this.snapshot.cropbox);
+				this.snapshot.textbox = document.createElement('textarea');
+				this.snapshot.textbox.style.display = "none";
+				this.snapshot.container.appendChild(this.snapshot.textbox);
 
 				var rect = video.getBoundingClientRect(); // use bounding rect instead of player.width/height because of fullscreen
 				this.snapshot.canvas.style.maxWidth  = rect.width  +"px";
@@ -223,6 +222,19 @@ function shortcuts(options) {
 					e.stopPropagation(); //otherwise canvas below gets mousedown
 				}, false);
 
+				snapshot.textbox.addEventListener('keydown', function(e){ // don't fire player shortcuts when textbox has focus
+					e.stopPropagation();
+				}, false);
+				snapshot.textbox.addEventListener('blur', function(e){
+					snapshot.ctx.fillStyle = color.value;
+					snapshot.ctx.font = scale*size.value +"px sans-serif";
+					snapshot.ctx.textBaseline = "top";
+					snapshot.ctx.fillText(snapshot.textbox.value, scale*snapshot.textbox.offsetLeft +scale, scale*snapshot.textbox.offsetTop +scale); //+1 for border
+					//FIXME: there's still a minor shift when scale isn't 1, in firefox more
+					snapshot.textbox.style.display = "none";
+					snapshot.textbox.value = "";
+				}, false);
+
 				var paint = false;
 				snapshot.container.addEventListener('mousedown', function(e){
 					paint = true;
@@ -255,6 +267,18 @@ function shortcuts(options) {
 							snapshot.cropbox.style.border = "1px dashed "+ color.value;
 							snapshot.cropbox.style.color = color.value;
 							break;
+						case "text":
+							snapshot.textbox.style.width = 0;
+							snapshot.textbox.style.height = 0;
+							snapshot.textbox.style.display = "block";
+							snapshot.textbox.style.left = x + "px";
+							snapshot.textbox.style.top = y + "px";
+
+							snapshot.textbox.style.border = "1px dashed "+ color.value;
+							snapshot.textbox.style.color = color.value;
+							snapshot.textbox.style.font = size.value +"px sans-serif";
+// 							snapshot.textbox.style.lineHeight = size.value +"px";
+							break;
 						case "eraser":
 							var s = size.value;
 							snapshot.ctx.clearRect(scale*x - s/2, scale*y - s/2, s, s);
@@ -286,6 +310,10 @@ function shortcuts(options) {
 								snapshot.cropbox.style.width = (x - snapshot.cropbox.offsetLeft) +"px"; // resize
 								snapshot.cropbox.style.height = (y - snapshot.cropbox.offsetTop) +"px";
 								break;
+							case "text":
+								snapshot.textbox.style.width = (x - snapshot.textbox.offsetLeft) +"px"; // resize
+								snapshot.textbox.style.height = (y - snapshot.textbox.offsetTop) +"px";
+								break;
 							case "eraser":
 								var s = size.value;
 								snapshot.ctx.clearRect(scale*x - s/2, scale*y - s/2, s, s);
@@ -304,6 +332,9 @@ function shortcuts(options) {
 									scale*snapshot.canvas_rect.offsetLeft, scale*snapshot.canvas_rect.offsetTop,
 									scale*snapshot.ctx_rect.canvas.width, scale*snapshot.ctx_rect.canvas.height);
 							snapshot.canvas_rect.style.display = "none";
+						}else if(tool.value == "text"){
+							el.blur();
+							snapshot.textbox.focus();
 						}
 					}
 				}

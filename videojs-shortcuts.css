@@ -60,18 +60,15 @@
 	position: relative;
 	cursor: crosshair;
 }
-#canvas_container canvas/*.vjs-centering>canvas*/{
+#canvas_container canvas{
 	position: absolute;
 	cursor: crosshair;
 }
-#canvas_container div/*.vjs-centering>canvas+canvas+div*/{
+#canvas_container div{
 	justify-content: center; /* align horizontal */
 	align-items: center; /* align vertical */
 
-	border: 1px dashed black; /* FIXME: not the best color probably */
 	position: absolute;
-	left: 0px;
-	top: 0px;
 	font-weight: bold;
 	text-shadow:
 		-1px -1px 0 #000,
@@ -79,4 +76,12 @@
 		-1px  1px 0 #000,
 		 1px  1px 0 #000;
 	cursor: pointer;
+}
+#canvas_container textarea{
+	position: absolute;
+	background: none;
+	padding: 0;
+	margin: 0;
+	outline-width: 0;
+	overflow: hidden;
 }
