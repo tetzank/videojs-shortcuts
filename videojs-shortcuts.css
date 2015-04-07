@@ -85,3 +85,11 @@
 	outline-width: 0;
 	overflow: hidden;
 }
+
+.vjs-drawing-ctrl>input[type="color"]{
+	background-color: rgba(0,0,0,0);
+	border: 0;
+}
+.vjs-drawing-ctrl>input[type="number"]{
+	width: 40px;
+}
