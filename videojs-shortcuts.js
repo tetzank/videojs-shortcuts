@@ -126,15 +126,6 @@ function shortcuts(options) {
 	};
 	this.el().appendChild(this.centering);
 
-	var scale;
-	function updateScale(video){ //FIXME: move inside screenshot() because it's only used there
-		var rect = video.getBoundingClientRect();
-		var scalew = player.snapshot.canvas.width / rect.width;
-		var scaleh = player.snapshot.canvas.height / rect.height;
-		scale = Math.max(Math.max(scalew, scaleh), 1);
-		var scale_txt = document.getElementById('scale');
-		scale_txt.innerHTML = Math.round(1/scale*100)/100;
-	}
 	//TODO:
 	// - controls inside player on new controlbar (with new exit button) hiding normal player controls
 	// - small icons instead of select box for tools
@@ -142,9 +133,19 @@ function shortcuts(options) {
 		var center = this.centering;
 		var el = this.el();
 		var video = el.querySelector('video');
+
+		function updateScale(video){
+			var rect = video.getBoundingClientRect();
+			var scalew = player.snapshot.canvas.width / rect.width;
+			var scaleh = player.snapshot.canvas.height / rect.height;
+			player.snapshot.ctrl.scale = Math.max(Math.max(scalew, scaleh), 1);
+			player.snapshot.ctrl.scale_txt.innerHTML = (Math.round(1/player.snapshot.ctrl.scale*100)/100) +"x";
+		}
+
 		if(video){
 			if(!this.snapshot){
 				this.snapshot = {};
+				//TODO: refactor to use videojs components
 				this.snapshot.parent = document.createElement('div');
 				this.snapshot.parent.id = "canvas_parent";
 				this.snapshot.container = document.createElement('div');
@@ -176,16 +177,56 @@ function shortcuts(options) {
 				this.snapshot.parent.style.height = video.videoHeight  +"px";
 				this.snapshot.parent.style.maxWidth  = rect.width  +"px";
 				this.snapshot.parent.style.maxHeight = rect.height +"px";
-				
+
+				// drawing control bar
+				this.snapshot.ctrl = document.createElement('div');
+				this.snapshot.ctrl.className = "vjs-control-bar vjs-drawing-ctrl";
+				this.snapshot.ctrl.style.display = "none";
+				this.snapshot.ctrl.color = document.createElement('input');
+				this.snapshot.ctrl.color.setAttribute('type', 'color');
+				this.snapshot.ctrl.color.value = '#df4b26';
+				this.snapshot.ctrl.appendChild(this.snapshot.ctrl.color);
+				this.snapshot.ctrl.size = document.createElement('input');
+				this.snapshot.ctrl.size.setAttribute('type', 'number');
+				this.snapshot.ctrl.size.value = '10';
+				this.snapshot.ctrl.appendChild(this.snapshot.ctrl.size);
+				this.snapshot.ctrl.tool = document.createElement('select');
+				this.snapshot.ctrl.tool.innerHTML =
+					'<option value="brush">brush</option>\
+					<option value="rectangle">rectangle</option>\
+					<option value="crop" selected="selected">crop</option>\
+					<option value="text">text</option>\
+					<option value="eraser">eraser</option>';
+				this.snapshot.ctrl.appendChild(this.snapshot.ctrl.tool);
+				this.snapshot.ctrl.dljpeg = document.createElement('button');
+				this.snapshot.ctrl.dljpeg.innerHTML = "JPEG";
+				this.snapshot.ctrl.appendChild(this.snapshot.ctrl.dljpeg);
+				this.snapshot.ctrl.dlpng = document.createElement('button');
+				this.snapshot.ctrl.dlpng.innerHTML = "PNG";
+				this.snapshot.ctrl.appendChild(this.snapshot.ctrl.dlpng);
+				this.snapshot.ctrl.scale_txt = document.createElement('span');
+				this.snapshot.ctrl.scale = null;
+				this.snapshot.ctrl.appendChild(this.snapshot.ctrl.scale_txt);
+				this.snapshot.ctrl.close = document.createElement('button');
+				this.snapshot.ctrl.close.innerHTML = "close";
+				this.snapshot.ctrl.close.style.float = "right";
+				this.snapshot.ctrl.appendChild(this.snapshot.ctrl.close);
+				el.appendChild(this.snapshot.ctrl);
+
 				var snapshot = this.snapshot;
-				color.addEventListener('change', function(e){
-					snapshot.ctx.strokeStyle = color.value;
+				snapshot.ctrl.color.addEventListener('change', function(e){
+					snapshot.ctx.strokeStyle = snapshot.ctrl.color.value;
 				}, false);
-				size.addEventListener('change', function(e){
-					snapshot.ctx.lineWidth = size.value / 2;
+				snapshot.ctrl.size.addEventListener('change', function(e){
+					snapshot.ctx.lineWidth = snapshot.ctrl.size.value / 2;
 				}, false);
-				tool.addEventListener('change', function(){
+				snapshot.ctrl.tool.addEventListener('change', function(){
 					snapshot.cropbox.style.display = "none";
+				}, false);
+				snapshot.ctrl.close.addEventListener('click', function(){
+					snapshot.ctrl.style.display = "none";
+					center.toggle('snapshot');
+					player.controlBar.show();
 				}, false);
 
 				snapshot.parent.appendChild(this.snapshot.container);
@@ -193,13 +234,13 @@ function shortcuts(options) {
 
 				function cropCanvas(canvas, context){
 					var newcanvas = document.createElement('canvas');
-					newcanvas.width = scale * snapshot.cropbox.offsetWidth;
-					newcanvas.height = scale * snapshot.cropbox.offsetHeight;
+					newcanvas.width = snapshot.ctrl.scale * snapshot.cropbox.offsetWidth;
+					newcanvas.height = snapshot.ctrl.scale * snapshot.cropbox.offsetHeight;
 					newcanvas.style.maxWidth  = rect.width  +"px";
 					newcanvas.style.maxHeight = rect.height +"px";
 
 					var ctx = newcanvas.getContext("2d");
-					ctx.drawImage(canvas, scale*snapshot.cropbox.offsetLeft, scale*snapshot.cropbox.offsetTop,
+					ctx.drawImage(canvas, snapshot.ctrl.scale*snapshot.cropbox.offsetLeft, snapshot.ctrl.scale*snapshot.cropbox.offsetTop,
 									newcanvas.width, newcanvas.height, 0, 0, newcanvas.width, newcanvas.height);
 
 					snapshot.container.replaceChild(newcanvas, canvas);
@@ -226,11 +267,13 @@ function shortcuts(options) {
 					e.stopPropagation();
 				}, false);
 				snapshot.textbox.addEventListener('blur', function(e){
-					snapshot.ctx.fillStyle = color.value;
-					snapshot.ctx.font = scale*size.value +"px sans-serif";
+					snapshot.ctx.fillStyle = snapshot.ctrl.color.value;
+					snapshot.ctx.font = snapshot.ctrl.scale*snapshot.ctrl.size.value +"px sans-serif";
 					snapshot.ctx.textBaseline = "top";
-					snapshot.ctx.fillText(snapshot.textbox.value, scale*snapshot.textbox.offsetLeft +scale, scale*snapshot.textbox.offsetTop +scale); //+1 for border
-					//FIXME: there's still a minor shift when scale isn't 1, in firefox more
+					snapshot.ctx.fillText(snapshot.textbox.value,
+							snapshot.ctrl.scale*snapshot.textbox.offsetLeft +snapshot.ctrl.scale,
+							snapshot.ctrl.scale*snapshot.textbox.offsetTop +snapshot.ctrl.scale); //+1 for border?
+					//FIXME: there's still a minor shift when scale isn't 1, in firefox more and also when scale is 1
 					snapshot.textbox.style.display = "none";
 					snapshot.textbox.value = "";
 				}, false);
@@ -241,9 +284,9 @@ function shortcuts(options) {
 					var pos = snapshot.container.getBoundingClientRect();
 					var x = e.clientX - pos.left;
 					var y = e.clientY - pos.top;
-					switch(tool.value){
+					switch(snapshot.ctrl.tool.value){
 						case "brush":
-							x *= scale; y *= scale;
+							x *= snapshot.ctrl.scale; y *= snapshot.ctrl.scale;
 							snapshot.ctx.beginPath();
 							snapshot.ctx.moveTo(x-1, y);
 							snapshot.ctx.lineTo(x, y);
@@ -264,24 +307,27 @@ function shortcuts(options) {
 							snapshot.cropbox.style.left = x + "px";
 							snapshot.cropbox.style.top = y + "px";
 
-							snapshot.cropbox.style.border = "1px dashed "+ color.value;
-							snapshot.cropbox.style.color = color.value;
+							snapshot.cropbox.style.border = "1px dashed "+ snapshot.ctrl.color.value;
+							snapshot.cropbox.style.color = snapshot.ctrl.color.value;
 							break;
 						case "text":
-							snapshot.textbox.style.width = 0;
-							snapshot.textbox.style.height = 0;
-							snapshot.textbox.style.display = "block";
-							snapshot.textbox.style.left = x + "px";
-							snapshot.textbox.style.top = y + "px";
+							// if shown already, loose focus and draw it first, otherwise it gets drawn at mousedown
+							if(snapshot.textbox.style.display == "none"){
+								snapshot.textbox.style.width = 0;
+								snapshot.textbox.style.height = 0;
+								snapshot.textbox.style.display = "block";
+								snapshot.textbox.style.left = x + "px";
+								snapshot.textbox.style.top = y + "px";
 
-							snapshot.textbox.style.border = "1px dashed "+ color.value;
-							snapshot.textbox.style.color = color.value;
-							snapshot.textbox.style.font = size.value +"px sans-serif";
-// 							snapshot.textbox.style.lineHeight = size.value +"px";
+								snapshot.textbox.style.border = "1px dashed "+ snapshot.ctrl.color.value;
+								snapshot.textbox.style.color = snapshot.ctrl.color.value;
+								snapshot.textbox.style.font = snapshot.ctrl.size.value +"px sans-serif";
+// 								snapshot.textbox.style.lineHeight = snapshot.ctrl.size.value +"px";
+							}
 							break;
 						case "eraser":
-							var s = size.value;
-							snapshot.ctx.clearRect(scale*x - s/2, scale*y - s/2, s, s);
+							var s = snapshot.ctrl.size.value;
+							snapshot.ctx.clearRect(snapshot.ctrl.scale*x - s/2, snapshot.ctrl.scale*y - s/2, s, s);
 							break;
 					}
 			// 		e.preventDefault();
@@ -292,9 +338,9 @@ function shortcuts(options) {
 						var pos = snapshot.container.getBoundingClientRect();
 						var x = e.clientX - pos.left;
 						var y = e.clientY - pos.top;
-						switch(tool.value){
+						switch(snapshot.ctrl.tool.value){
 							case "brush":
-								snapshot.ctx.lineTo(scale * x, scale * y);
+								snapshot.ctx.lineTo(snapshot.ctrl.scale * x, snapshot.ctrl.scale * y);
 								snapshot.ctx.stroke();
 								break;
 							case "rectangle":
@@ -302,8 +348,8 @@ function shortcuts(options) {
 								// this way it's only possible to drag to the right and down, mousedown sets top left
 								snapshot.canvas_rect.width = x - snapshot.canvas_rect.offsetLeft; // resize canvas
 								snapshot.canvas_rect.height = y - snapshot.canvas_rect.offsetTop;
-								snapshot.ctx_rect.strokeStyle = color.value; //looks like its reset when resizing canvas
-								snapshot.ctx_rect.lineWidth = size.value / scale; // scale lineWidth
+								snapshot.ctx_rect.strokeStyle = snapshot.ctrl.color.value; //looks like its reset when resizing canvas
+								snapshot.ctx_rect.lineWidth = snapshot.ctrl.size.value / snapshot.ctrl.scale; // scale lineWidth
 								snapshot.ctx_rect.strokeRect(0, 0, snapshot.ctx_rect.canvas.width, snapshot.ctx_rect.canvas.height);
 								break;
 							case "crop":
@@ -315,8 +361,8 @@ function shortcuts(options) {
 								snapshot.textbox.style.height = (y - snapshot.textbox.offsetTop) +"px";
 								break;
 							case "eraser":
-								var s = size.value;
-								snapshot.ctx.clearRect(scale*x - s/2, scale*y - s/2, s, s);
+								var s = snapshot.ctrl.size.value;
+								snapshot.ctx.clearRect(snapshot.ctrl.scale*x - s/2, snapshot.ctrl.scale*y - s/2, s, s);
 								break;
 						}
 						e.preventDefault();
@@ -326,13 +372,13 @@ function shortcuts(options) {
 				function finish(){
 					if(paint){
 						paint = false;
-						if(tool.value == "rectangle"){
+						if(snapshot.ctrl.tool.value == "rectangle"){
 							//blit snapshot.canvas_rect on canvas, scaled
 							snapshot.ctx.drawImage(snapshot.canvas_rect,
-									scale*snapshot.canvas_rect.offsetLeft, scale*snapshot.canvas_rect.offsetTop,
-									scale*snapshot.ctx_rect.canvas.width, scale*snapshot.ctx_rect.canvas.height);
+									snapshot.ctrl.scale*snapshot.canvas_rect.offsetLeft, snapshot.ctrl.scale*snapshot.canvas_rect.offsetTop,
+									snapshot.ctrl.scale*snapshot.ctx_rect.canvas.width, snapshot.ctrl.scale*snapshot.ctx_rect.canvas.height);
 							snapshot.canvas_rect.style.display = "none";
-						}else if(tool.value == "text"){
+						}else if(snapshot.ctrl.tool.value == "text"){
 							el.blur();
 							snapshot.textbox.focus();
 						}
@@ -350,18 +396,18 @@ function shortcuts(options) {
 					ctx_tmp.drawImage(snapshot.canvas, 0, 0);
 					window.open(canvas_tmp.toDataURL(encoding));
 				}
-				dljpeg.addEventListener('click', function(){
+				snapshot.ctrl.dljpeg.addEventListener('click', function(){
 					combineDrawing("image/jpeg");
 				}, false);
-				dlpng.addEventListener('click', function(){
+				snapshot.ctrl.dlpng.addEventListener('click', function(){
 					combineDrawing("image/png");
 				}, false);
 			}
 
 			this.snapshot.canvas.width = video.videoWidth;
 			this.snapshot.canvas.height = video.videoHeight;
-			this.snapshot.ctx.strokeStyle = color.value;
-			this.snapshot.ctx.lineWidth = size.value / 2;
+			this.snapshot.ctx.strokeStyle = this.snapshot.ctrl.color.value;
+			this.snapshot.ctx.lineWidth = this.snapshot.ctrl.size.value / 2;
 			this.snapshot.ctx.lineCap = "round";
 			updateScale(video);
 
@@ -370,7 +416,8 @@ function shortcuts(options) {
 			this.snapshot.ctx_bg.drawImage(video, 0, 0);
 
 			center.toggle('snapshot');
-			paintcontrols.style.visibility = "visible";
+			this.snapshot.ctrl.style.display = "block";
+			player.controlBar.hide();
 
 			this.pause();
 			el.blur(); // loose keyboard focus on video
