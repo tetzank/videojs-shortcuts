@@ -126,9 +126,7 @@ function shortcuts(options) {
 	};
 	this.el().appendChild(this.centering);
 
-	//TODO:
-	// - controls inside player on new controlbar (with new exit button) hiding normal player controls
-	// - small icons instead of select box for tools
+	//TODO: - small icons instead of select box for tools
 	function screenshot(){
 		var center = this.centering;
 		var el = this.el();
@@ -183,34 +181,61 @@ function shortcuts(options) {
 				this.snapshot.ctrl.className = "vjs-control-bar vjs-drawing-ctrl";
 				this.snapshot.ctrl.style.display = "none";
 				this.snapshot.ctrl.color = document.createElement('input');
+				this.snapshot.ctrl.color.className = "vjs-control";
 				this.snapshot.ctrl.color.setAttribute('type', 'color');
 				this.snapshot.ctrl.color.value = '#df4b26';
+				this.snapshot.ctrl.color.title = "color";
 				this.snapshot.ctrl.appendChild(this.snapshot.ctrl.color);
 				this.snapshot.ctrl.size = document.createElement('input');
+				this.snapshot.ctrl.size.className = "vjs-control";
 				this.snapshot.ctrl.size.setAttribute('type', 'number');
 				this.snapshot.ctrl.size.value = '10';
+				this.snapshot.ctrl.size.title = "line width, text size, ...";
 				this.snapshot.ctrl.appendChild(this.snapshot.ctrl.size);
-				this.snapshot.ctrl.tool = document.createElement('select');
-				this.snapshot.ctrl.tool.innerHTML =
-					'<option value="brush">brush</option>\
-					<option value="rectangle">rectangle</option>\
-					<option value="crop" selected="selected">crop</option>\
-					<option value="text">text</option>\
-					<option value="eraser">eraser</option>';
-				this.snapshot.ctrl.appendChild(this.snapshot.ctrl.tool);
+
+				this.snapshot.ctrl.tool = 'crop';
+				this.snapshot.ctrl.toolbrush = document.createElement('div');
+				this.snapshot.ctrl.toolbrush.className = "vjs-control vjs-drawing-brush";
+				this.snapshot.ctrl.toolbrush.dataset.value = 'brush';
+				this.snapshot.ctrl.toolbrush.title = "freehand drawing";
+				this.snapshot.ctrl.appendChild(this.snapshot.ctrl.toolbrush);
+				this.snapshot.ctrl.toolrect = document.createElement('div');
+				this.snapshot.ctrl.toolrect.className = "vjs-control vjs-drawing-rect";
+				this.snapshot.ctrl.toolrect.dataset.value =  'rectangle';
+				this.snapshot.ctrl.toolrect.title = "draw rectangle from top left to bottom right";
+				this.snapshot.ctrl.appendChild(this.snapshot.ctrl.toolrect);
+				this.snapshot.ctrl.toolcrop = document.createElement('div');
+				this.snapshot.ctrl.toolcrop.dataset.value = 'crop';
+				this.snapshot.ctrl.toolcrop.title = "select area and click selection to crop";
+				this.snapshot.ctrl.toolcrop.className = "vjs-control vjs-drawing-crop vjs-tool-active";
+				this.snapshot.ctrl.appendChild(this.snapshot.ctrl.toolcrop);
+				this.snapshot.ctrl.tooltext = document.createElement('div');
+				this.snapshot.ctrl.tooltext.className = "vjs-control vjs-drawing-text";
+				this.snapshot.ctrl.tooltext.dataset.value = 'text';
+				this.snapshot.ctrl.tooltext.title = "select area, type message and then click somewhere else";
+				this.snapshot.ctrl.appendChild(this.snapshot.ctrl.tooltext);
+				this.snapshot.ctrl.tooldel = document.createElement('div');
+				this.snapshot.ctrl.tooldel.className = "vjs-control vjs-drawing-del";
+				this.snapshot.ctrl.tooldel.dataset.value = 'eraser';
+				this.snapshot.ctrl.tooldel.title = "erase drawing in clicked location";
+				this.snapshot.ctrl.appendChild(this.snapshot.ctrl.tooldel);
+
 				this.snapshot.ctrl.dljpeg = document.createElement('button');
 				this.snapshot.ctrl.dljpeg.innerHTML = "JPEG";
+				this.snapshot.ctrl.dljpeg.title = "open new tab with jpeg image";
 				this.snapshot.ctrl.appendChild(this.snapshot.ctrl.dljpeg);
 				this.snapshot.ctrl.dlpng = document.createElement('button');
 				this.snapshot.ctrl.dlpng.innerHTML = "PNG";
+				this.snapshot.ctrl.dlpng.title = "open new tab with png image";
 				this.snapshot.ctrl.appendChild(this.snapshot.ctrl.dlpng);
 				this.snapshot.ctrl.scale_txt = document.createElement('span');
 				this.snapshot.ctrl.scale = null;
 				this.snapshot.ctrl.appendChild(this.snapshot.ctrl.scale_txt);
-				this.snapshot.ctrl.close = document.createElement('button');
-				this.snapshot.ctrl.close.innerHTML = "close";
-				this.snapshot.ctrl.close.style.float = "right";
+				this.snapshot.ctrl.close = document.createElement('div');
+				this.snapshot.ctrl.close.className = "vjs-control vjs-drawing-close";
+				this.snapshot.ctrl.close.title = "close screenshot and return to video";
 				this.snapshot.ctrl.appendChild(this.snapshot.ctrl.close);
+
 				el.appendChild(this.snapshot.ctrl);
 
 				var snapshot = this.snapshot;
@@ -220,9 +245,19 @@ function shortcuts(options) {
 				snapshot.ctrl.size.addEventListener('change', function(e){
 					snapshot.ctx.lineWidth = snapshot.ctrl.size.value / 2;
 				}, false);
-				snapshot.ctrl.tool.addEventListener('change', function(){
-					snapshot.cropbox.style.display = "none";
-				}, false);
+				
+				function tool_clicked(e){
+					var active_tool = snapshot.ctrl.querySelector('.vjs-tool-active');
+					active_tool.classList.remove('vjs-tool-active');
+					e.target.classList.add('vjs-tool-active');
+					snapshot.ctrl.tool = e.target.dataset.value;
+				}
+				snapshot.ctrl.toolbrush.addEventListener('click', tool_clicked);
+				snapshot.ctrl.toolrect.addEventListener('click', tool_clicked);
+				snapshot.ctrl.toolcrop.addEventListener('click', tool_clicked);
+				snapshot.ctrl.tooltext.addEventListener('click', tool_clicked);
+				snapshot.ctrl.tooldel.addEventListener('click', tool_clicked);
+
 				snapshot.ctrl.close.addEventListener('click', function(){
 					snapshot.ctrl.style.display = "none";
 					center.toggle('snapshot');
@@ -284,7 +319,7 @@ function shortcuts(options) {
 					var pos = snapshot.container.getBoundingClientRect();
 					var x = e.clientX - pos.left;
 					var y = e.clientY - pos.top;
-					switch(snapshot.ctrl.tool.value){
+					switch(snapshot.ctrl.tool){
 						case "brush":
 							x *= snapshot.ctrl.scale; y *= snapshot.ctrl.scale;
 							snapshot.ctx.beginPath();
@@ -338,7 +373,7 @@ function shortcuts(options) {
 						var pos = snapshot.container.getBoundingClientRect();
 						var x = e.clientX - pos.left;
 						var y = e.clientY - pos.top;
-						switch(snapshot.ctrl.tool.value){
+						switch(snapshot.ctrl.tool){
 							case "brush":
 								snapshot.ctx.lineTo(snapshot.ctrl.scale * x, snapshot.ctrl.scale * y);
 								snapshot.ctx.stroke();
@@ -372,13 +407,13 @@ function shortcuts(options) {
 				function finish(){
 					if(paint){
 						paint = false;
-						if(snapshot.ctrl.tool.value == "rectangle"){
+						if(snapshot.ctrl.tool == "rectangle"){
 							//blit snapshot.canvas_rect on canvas, scaled
 							snapshot.ctx.drawImage(snapshot.canvas_rect,
 									snapshot.ctrl.scale*snapshot.canvas_rect.offsetLeft, snapshot.ctrl.scale*snapshot.canvas_rect.offsetTop,
 									snapshot.ctrl.scale*snapshot.ctx_rect.canvas.width, snapshot.ctrl.scale*snapshot.ctx_rect.canvas.height);
 							snapshot.canvas_rect.style.display = "none";
-						}else if(snapshot.ctrl.tool.value == "text"){
+						}else if(snapshot.ctrl.tool == "text"){
 							el.blur();
 							snapshot.textbox.focus();
 						}
