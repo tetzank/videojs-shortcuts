@@ -119,6 +119,24 @@
 	height: 2em;
 }
 
+.vjs-drawing-ctrl>.vjs-button{
+	display: flex;
+	justify-content: center; /* align horizontal */
+	align-items: center; /* align vertical */
+}
+.vjs-drawing-ctrl>.vjs-button:hover{
+	text-shadow: 0 0 1em white;
+}
+.vjs-drawing-ctrl>.vjs-scale{
+	display: flex;
+	justify-content: center; /* align horizontal */
+	align-items: center; /* align vertical */
+	position: relative;
+	height: 3em;
+	width: 4em;
+	float: right;
+}
+
 #cam::before{   content: '\e012'; }
 .vjs-drawing-brush::before{ content: '\e013'; }
 .vjs-drawing-rect::before{  content: '\e014'; }

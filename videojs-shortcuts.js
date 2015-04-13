@@ -220,21 +220,24 @@ function shortcuts(options) {
 				this.snapshot.ctrl.tooldel.title = "erase drawing in clicked location";
 				this.snapshot.ctrl.appendChild(this.snapshot.ctrl.tooldel);
 
-				this.snapshot.ctrl.dljpeg = document.createElement('button');
+				this.snapshot.ctrl.dljpeg = document.createElement('div');
+				this.snapshot.ctrl.dljpeg.className = "vjs-control vjs-button";
 				this.snapshot.ctrl.dljpeg.innerHTML = "JPEG";
 				this.snapshot.ctrl.dljpeg.title = "open new tab with jpeg image";
 				this.snapshot.ctrl.appendChild(this.snapshot.ctrl.dljpeg);
-				this.snapshot.ctrl.dlpng = document.createElement('button');
+				this.snapshot.ctrl.dlpng = document.createElement('div');
+				this.snapshot.ctrl.dlpng.className = "vjs-control vjs-button";
 				this.snapshot.ctrl.dlpng.innerHTML = "PNG";
 				this.snapshot.ctrl.dlpng.title = "open new tab with png image";
 				this.snapshot.ctrl.appendChild(this.snapshot.ctrl.dlpng);
-				this.snapshot.ctrl.scale_txt = document.createElement('span');
-				this.snapshot.ctrl.scale = null;
-				this.snapshot.ctrl.appendChild(this.snapshot.ctrl.scale_txt);
 				this.snapshot.ctrl.close = document.createElement('div');
 				this.snapshot.ctrl.close.className = "vjs-control vjs-drawing-close";
 				this.snapshot.ctrl.close.title = "close screenshot and return to video";
 				this.snapshot.ctrl.appendChild(this.snapshot.ctrl.close);
+				this.snapshot.ctrl.scale_txt = document.createElement('div');
+				this.snapshot.ctrl.scale_txt.className = "vjs-scale";
+				this.snapshot.ctrl.scale = null;
+				this.snapshot.ctrl.appendChild(this.snapshot.ctrl.scale_txt);
 
 				el.appendChild(this.snapshot.ctrl);
 
