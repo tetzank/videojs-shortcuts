@@ -11,48 +11,47 @@ function shortcuts(options) {
 		this.el().focus();
 	});
 
-	this.contrast = 1;
-	this.brightness = 1;
-	this.setFilter = function(){
-		this.el().style.filter = "contrast("+this.contrast+") brightness("+this.brightness+")";
-		this.el().style.webkitFilter = "contrast("+this.contrast+") brightness("+this.brightness+")";
-	};
+	var contrast = 1, brightness = 1;
+	function setFilter(){
+		this.el().style.filter = "contrast("+contrast+") brightness("+brightness+")";
+		this.el().style.webkitFilter = "contrast("+contrast+") brightness("+brightness+")";
+	}
 	function adjustContrast(delta){
-		this.contrast += delta;
-		this.setFilter();
-		this.osd("contrast: "+ Math.round(this.contrast * 10)/10);
+		contrast += delta;
+		setFilter();
+		osd("contrast: "+ Math.round(contrast * 10)/10);
 	}
 	function adjustBrightness(delta){
-		this.brightness += delta;
-		this.setFilter();
-		this.osd("brightness: "+ Math.round(this.brightness * 10)/10);
+		brightness += delta;
+		setFilter();
+		osd("brightness: "+ Math.round(brightness * 10)/10);
 	}
 	function resetFilters(){
-		this.contrast = 1;
-		this.brightness = 1;
-		this.setFilter();
-		this.osd("reseted filters");
+		contrast = 1;
+		brightness = 1;
+		setFilter();
+		osd("reseted filters");
 	}
 
 	// osd overlay
-	this.osd_overlay = document.createElement('div');
-	this.osd_overlay.className = "vjs-osd vjs-outlined";
-	this.el().appendChild(this.osd_overlay);
-	this.osd = function(text){
-		this.osd_overlay.innerHTML = text;
+	var osd_overlay = document.createElement('div');
+	osd_overlay.className = "vjs-osd vjs-outlined";
+	this.el().appendChild(osd_overlay);
+	function osd(text){
+		osd_overlay.innerHTML = text;
 		// in case animation is running -> restart
-		this.osd_overlay.classList.remove("fadeout");
+		osd_overlay.classList.remove("fadeout");
 		//triggering reflow -> recognizes classList change
-		this.osd_overlay.offsetWidth = this.osd_overlay.offsetWidth;
+		osd_overlay.offsetWidth = osd_overlay.offsetWidth;
 		// start animation
-		this.osd_overlay.classList.add("fadeout");
+		osd_overlay.classList.add("fadeout");
 		// remove class on end of animation
 		var removefn = function(event){
 			this.classList.remove("fadeout");
 		};
-		this.osd_overlay.addEventListener('animationend', removefn, false);
-		this.osd_overlay.addEventListener('webkitAnimationEnd', removefn, false);
-	};
+		osd_overlay.addEventListener('animationend', removefn, false);
+		osd_overlay.addEventListener('webkitAnimationEnd', removefn, false);
+	}
 
 	function seek(delta){
 		this.currentTime(Math.min(Math.max(this.currentTime() + delta, 0), this.duration()));
@@ -72,11 +71,11 @@ function shortcuts(options) {
 	// does not work too: test this.techName !== "Html5"
 	function adjustSpeed(factor){
 		this.playbackRate(Math.round(this.playbackRate()*factor * 100)/100);
-		this.osd("Speed: "+ this.playbackRate());
+		osd("Speed: "+ this.playbackRate());
 	}
 	function resetSpeed(){
 		this.playbackRate(1);
-		this.osd("Speed: 1");
+		osd("Speed: 1");
 	}
 	function togglePause(){
 		if(this.paused()){
@@ -96,19 +95,19 @@ function shortcuts(options) {
 		}
 	}
 
-	this.centering = document.createElement('div');
-	this.centering.className = "vjs-centering";
-	this.centering.style.display = "none";
-	this.centering.displays = {};
-	this.centering.currentDisplay = null;
-	this.centering.addDisplay = function(key, elements){
+	var centering = document.createElement('div');
+	centering.className = "vjs-centering";
+	centering.style.display = "none";
+	centering.displays = {};
+	centering.currentDisplay = null;
+	centering.addDisplay = function(key, elements){
 		this.displays[key] = elements;
 		for(var i=0; i<elements.length; ++i){
 			elements[i].style.display = "none";
 			this.appendChild(elements[i]);
 		}
 	};
-	this.centering.toggle = function(key){
+	centering.toggle = function(key){
 		var ele, i;
 		if(this.currentDisplay && this.currentDisplay!=key){
 			ele = this.displays[this.currentDisplay];
@@ -124,11 +123,12 @@ function shortcuts(options) {
 		this.style.display = d;
 		this.currentDisplay = (d=="block")? key: null;
 	};
-	this.el().appendChild(this.centering);
+	this.el().appendChild(centering);
 
+	var helpscreen = null;
 	function showHelp(){
 		// show list of shortcuts with description
-		if(!this.helpscreen){
+		if(!helpscreen){
 			var help_str = "";
 			for(var key in opts){
 				var o = opts[key];
@@ -140,14 +140,14 @@ function shortcuts(options) {
 					}
 				}
 			}
-			this.helpscreen = document.createElement('div');
-			this.helpscreen.className = "vjs-helpscreen";
+			helpscreen = document.createElement('div');
+			helpscreen.className = "vjs-helpscreen";
 			var tbl = document.createElement('table');
 			tbl.innerHTML = help_str;
-			this.helpscreen.appendChild(tbl);
-			this.centering.addDisplay('help', [this.helpscreen]);
+			helpscreen.appendChild(tbl);
+			centering.addDisplay('help', [helpscreen]);
 		}
-		this.centering.toggle('help');
+		centering.toggle('help');
 	}
 
 	//TODO: when chromium supports key properly -> refactor by inlining some functions
