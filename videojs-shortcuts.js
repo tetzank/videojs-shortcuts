@@ -95,19 +95,20 @@ function shortcuts(options) {
 		}
 	}
 
-	var centering = document.createElement('div');
-	centering.className = "vjs-centering";
-	centering.style.display = "none";
-	centering.displays = {};
-	centering.currentDisplay = null;
-	centering.addDisplay = function(key, elements){
+	//FIXME: used outside, so it needs to be added to player
+	player.centering = document.createElement('div');
+	player.centering.className = "vjs-centering";
+	player.centering.style.display = "none";
+	player.centering.displays = {};
+	player.centering.currentDisplay = null;
+	player.centering.addDisplay = function(key, elements){
 		this.displays[key] = elements;
 		for(var i=0; i<elements.length; ++i){
 			elements[i].style.display = "none";
 			this.appendChild(elements[i]);
 		}
 	};
-	centering.toggle = function(key){
+	player.centering.toggle = function(key){
 		var ele, i;
 		if(this.currentDisplay && this.currentDisplay!=key){
 			ele = this.displays[this.currentDisplay];
@@ -123,7 +124,7 @@ function shortcuts(options) {
 		this.style.display = d;
 		this.currentDisplay = (d=="block")? key: null;
 	};
-	this.el().appendChild(centering);
+	this.el().appendChild(player.centering);
 
 	var helpscreen = null;
 	function showHelp(){
@@ -145,9 +146,9 @@ function shortcuts(options) {
 			var tbl = document.createElement('table');
 			tbl.innerHTML = help_str;
 			helpscreen.appendChild(tbl);
-			centering.addDisplay('help', [helpscreen]);
+			player.centering.addDisplay('help', [helpscreen]);
 		}
-		centering.toggle('help');
+		player.centering.toggle('help');
 	}
 
 	//TODO: when chromium supports key properly -> refactor by inlining some functions
