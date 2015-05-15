@@ -2,6 +2,8 @@
 function shortcuts(options) {
 // 	"use strict";
 
+	var player = this;
+
 	// Set default player tabindex to handle keydown events
 	if (!this.el().hasAttribute('tabIndex')) {
 		this.el().setAttribute('tabIndex', '-1');
@@ -13,8 +15,8 @@ function shortcuts(options) {
 
 	var contrast = 1, brightness = 1;
 	function setFilter(){
-		this.el().style.filter = "contrast("+contrast+") brightness("+brightness+")";
-		this.el().style.webkitFilter = "contrast("+contrast+") brightness("+brightness+")";
+		player.el().style.filter = "contrast("+contrast+") brightness("+brightness+")";
+		player.el().style.webkitFilter = "contrast("+contrast+") brightness("+brightness+")";
 	}
 	function adjustContrast(delta){
 		contrast += delta;
